@@ -53,13 +53,20 @@ frequencies_to_stop_times <- function(gtfs)  {
 
     # create empty data.table for output from frequencies
     stop_times <- gtfs_cp$stop_times [0]
+    stop_times_base <- stop_times
 
     trips <- unique (gtfs_cp$frequencies [, trip_id])
+    
+    # for display of trip processing
+    kmax <- length(trips)
+    k <- 1
 
     for (trip in trips)  {
 
         # n is to  be added to trip_id
         n <- 1
+        
+        print(paste(k, "of", kmax, "original trips tranformed.", sep = " "))
 
         # order frequencies table by trip_id and start_time
         frequencies_trip <-
@@ -88,6 +95,8 @@ frequencies_to_stop_times <- function(gtfs)  {
 
         headway <- headway_old <- frequencies_trip [1] [["headway_secs"]]
 
+        stop_times_small <- stop_times_base
+        
         for (i in row (frequencies_trip))  {
 
             end_t <- frequencies_trip [i] [["end_time"]]
@@ -100,6 +109,8 @@ frequencies_to_stop_times <- function(gtfs)  {
                 start_t <- start_t - headway_old + headway,
                 start_t <- frequencies_trip [i] [["start_time"]]
             )
+            
+            stop_times_small_small <- stop_times_base
 
             # multiply stop_times for all trips based on a given frequency
             while (start_t < end_t)  {
@@ -114,14 +125,21 @@ frequencies_to_stop_times <- function(gtfs)  {
 
                 n <- n + 1
 
-                stop_times <- rbind (stop_times, stop_times_trip_i)
-
+                #stop_times <- rbind (stop_times, stop_times_trip_i)
+                stop_times_small_small <- rbind (stop_times_small_small, stop_times_trip_i)
+                
                 start_t <- start_t + headway
             }
+            
+            stop_times_small <- rbind (stop_times_small, stop_times_small_small)
 
             headway_old <- headway
 
         }
+        
+        stop_times <- rbind (stop_times, stop_times_small)
+        
+        k <- k + 1
 
     }
 
